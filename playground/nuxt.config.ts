@@ -1,11 +1,8 @@
-import { defineNuxtConfig } from 'nuxt/config'
-import MyModule from '..'
+import NuxtQuery from '..'
 
 export default defineNuxtConfig({
-  modules: [
-    MyModule
-  ],
-  myModule: {
-    addPlugin: true
+  modules: [NuxtQuery],
+  nuxtQuery: {
+    addDevtools: true
   }
 })
