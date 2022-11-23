@@ -8,11 +8,14 @@
     <button @click="barRefresh()">
       refresh bar
     </button>
+
+    {{ useQueryCache() }}
   </div>
 </template>
 
 <script setup lang="ts">
 import { useFetch } from '#app'
+import { useQueryCache } from '../src/runtime/composables/useQueryCache'
 
 const { data: fooData, refresh: fooRefresh } = await useFetch('/api/foo', {
   key: 'foo'
