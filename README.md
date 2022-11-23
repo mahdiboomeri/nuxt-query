@@ -1,6 +1,6 @@
 # Nuxt Query
 
-This is a work in progress.
+This is a WIP.
 
 See [#1](https://github.com/mahdiboomeri/nuxt-query/issues/1) for progress.
 
