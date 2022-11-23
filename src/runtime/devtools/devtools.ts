@@ -12,7 +12,7 @@ export const setupDevtools = (app: any, data: Record<string, any>) => {
   }, (api) => {
     api.addInspector({
       id: inspectorId,
-      label: 'Nuxt Query Cache',
+      label: 'Nuxt Query',
       icon: 'cached'
     })
 
