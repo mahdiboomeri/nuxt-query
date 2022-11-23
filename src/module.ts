@@ -1,24 +1,30 @@
 import { fileURLToPath } from 'url'
-import { defineNuxtModule, addPlugin, createResolver } from '@nuxt/kit'
+import { defineNuxtModule, addPlugin, createResolver, useLogger } from '@nuxt/kit'
 
 export interface ModuleOptions {
-  addPlugin: boolean
+  addDevtools: boolean
 }
+
+const PACKAGE_NAME = 'nuxt-query'
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
-    name: 'nuxt-query',
+    name: PACKAGE_NAME,
     configKey: 'nuxtQuery'
   },
   defaults: {
-    addPlugin: true
+    addDevtools: true
   },
   setup (options, nuxt) {
-    if (options.addPlugin) {
+    const logger = useLogger(PACKAGE_NAME)
+
+    if (options.addDevtools) {
       const { resolve } = createResolver(import.meta.url)
       const runtimeDir = fileURLToPath(new URL('./runtime', import.meta.url))
       nuxt.options.build.transpile.push(runtimeDir)
-      addPlugin(resolve(runtimeDir, 'plugin'))
+
+      addPlugin(resolve(runtimeDir, 'plugins', 'devtools'))
+      logger.info('Installed nuxt-query devtools.')
     }
   }
 })
