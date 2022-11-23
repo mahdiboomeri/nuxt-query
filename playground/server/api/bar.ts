@@ -1,5 +1,5 @@
 export default defineEventHandler(() => {
   return {
-    hello2: Math.random()
+    bar: Math.random()
   }
 })
