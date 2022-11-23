@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'url'
-import { defineNuxtModule, addPlugin, createResolver, useLogger } from '@nuxt/kit'
+import { defineNuxtModule, addPlugin, createResolver, useLogger, addImportsDir } from '@nuxt/kit'
 import { defu } from 'defu'
 
 export interface ModuleOptions {
@@ -29,9 +29,14 @@ export default defineNuxtModule<ModuleOptions>({
 
     logger.success('Starting nuxt-query...')
 
+    // Register the devtools
     if (config.addDevtools) {
       addPlugin(resolve(runtimeDir, 'plugins', 'devtools'))
       logger.success('Installed nuxt-query devtools.')
     }
+
+    // Add composables
+    const composables = resolve(runtimeDir, 'composables')
+    addImportsDir(composables)
   }
 })
