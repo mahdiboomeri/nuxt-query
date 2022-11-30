@@ -7,7 +7,12 @@ import type {
 } from 'nuxt/dist/app/composables/asyncData'
 import type { NuxtApp } from '@nuxt/schema'
 import { Ref, ref, unref, watch } from 'vue'
-import { useAsyncData, useQueryClient } from '#imports'
+import {
+  useAsyncData,
+  useNuxtApp,
+  useQueryCache,
+  useQueryClient,
+} from '#imports'
 
 type QueryState = 'pending' | 'error' | 'success'
 
@@ -30,29 +35,70 @@ export function useQuery<
 ) {
   type Data = PickFrom<ReturnType<Transform>, PickKeys>
 
+  const nuxt = useNuxtApp()
+
   const state = ref<QueryState>('pending')
+  const calculateState = (resolvedQuery: QueryData<Data, DataE | null>) => {
+    if (resolvedQuery.pending.value) {
+      state.value = 'pending'
+    } else if (resolvedQuery.error.value) {
+      state.value = 'error'
+    } else {
+      state.value = 'success'
+    }
+  }
+
+  // Resolve options
+  const _options: AsyncDataOptions<DataT, Transform, PickKeys> = {
+    ...unref(useQueryClient<DataT, Transform, PickKeys>()),
+    ...options,
+  }
+
   const query = useAsyncData<DataT, DataE, Transform, PickKeys>(
     key,
     () => handler(),
-    {
-      ...unref(useQueryClient<DataT, Transform, PickKeys>()),
-      ...options,
-    }
+    _options
   ) as Promise<_AsyncData<Data, DataE | null>>
 
-  query.finally(() => {
-    const resolvedQuery = query as QueryData<Data, DataE | null>
+  const fetchOnServer = _options.server !== false && nuxt.payload.serverRendered
+  const hasCachedData = () => useQueryCache() !== undefined
 
-    watch(resolvedQuery.pending, () => {
-      if (resolvedQuery.pending.value) {
-        state.value = 'pending'
-      } else if (resolvedQuery.error.value) {
-        state.value = 'error'
-      } else {
-        state.value = 'success'
-      }
+  // Server side
+  if (process.server && fetchOnServer) {
+    state.value = 'pending'
+
+    if (_options.immediate) {
+      query.finally(() => {
+        const serverQuery = query as QueryData<Data, DataE | null>
+
+        if (serverQuery.error.value) {
+          state.value = 'error'
+        } else {
+          state.value = 'success'
+        }
+      })
+    }
+  }
+
+  // Sync while hydration
+  if (fetchOnServer && nuxt.isHydrating && hasCachedData()) {
+    const hydrationQuery = query as QueryData<Data, DataE | null>
+
+    watch(hydrationQuery.pending, () => {
+      calculateState(hydrationQuery)
     })
-  })
+  }
+
+  // Client side
+  if (process.client) {
+    query.finally(() => {
+      const clientQuery = query as QueryData<Data, DataE | null>
+
+      watch(clientQuery.pending, () => {
+        calculateState(clientQuery)
+      })
+    })
+  }
 
   return {
     ...query,
