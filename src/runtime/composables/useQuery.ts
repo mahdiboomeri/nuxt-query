@@ -84,9 +84,13 @@ export function useQuery<
   if (fetchOnServer && nuxt.isHydrating && hasCachedData()) {
     const hydrationQuery = query as QueryData<Data, DataE | null>
 
-    watch(hydrationQuery.pending, () => {
-      calculateState(hydrationQuery)
-    })
+    watch(
+      hydrationQuery.pending,
+      () => {
+        calculateState(hydrationQuery)
+      },
+      { immediate: true }
+    )
   }
 
   // Client side
@@ -94,9 +98,13 @@ export function useQuery<
     query.finally(() => {
       const clientQuery = query as QueryData<Data, DataE | null>
 
-      watch(clientQuery.pending, () => {
-        calculateState(clientQuery)
-      })
+      watch(
+        clientQuery.pending,
+        () => {
+          calculateState(clientQuery)
+        },
+        { immediate: true }
+      )
     })
   }
 
