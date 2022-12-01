@@ -2,6 +2,11 @@
   "name": "nuxt-query",
   "version": "0.0.1",
   "license": "MIT",
+  "author": "Mahdi Boomeri <mahdi.b2or@proton.me>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mahdiboomeri/nuxt-query.git"
+  },
   "type": "module",
   "exports": {
     ".": {
