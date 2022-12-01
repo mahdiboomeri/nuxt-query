@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { useQuery } from '~~/../dist/runtime/composables/useQuery'
+import { useQuery } from '#imports'
 
 const { data, state, pending } = useQuery('data', () => $fetch('/api/bar'))
 </script>

@@ -1,5 +1,11 @@
 import { fileURLToPath } from 'url'
-import { defineNuxtModule, addPlugin, createResolver, useLogger, addImportsDir } from '@nuxt/kit'
+import {
+  defineNuxtModule,
+  addPlugin,
+  useLogger,
+  addImports,
+  createResolver,
+} from '@nuxt/kit'
 import { defu } from 'defu'
 
 export interface ModuleOptions {
@@ -11,21 +17,25 @@ const PACKAGE_NAME = 'nuxt-query'
 export default defineNuxtModule<ModuleOptions>({
   meta: {
     name: PACKAGE_NAME,
-    configKey: 'nuxtQuery'
+    configKey: 'nuxtQuery',
   },
   defaults: {
-    addDevtools: true
+    addDevtools: true,
   },
-  setup (options, nuxt) {
+  setup(options, nuxt) {
     const logger = useLogger(PACKAGE_NAME)
+
     const { resolve } = createResolver(import.meta.url)
     const runtimeDir = fileURLToPath(new URL('./runtime', import.meta.url))
     nuxt.options.build.transpile.push(runtimeDir)
 
     // Final resolved config
-    const config = nuxt.options.runtimeConfig.public.nuxtQuery = defu(nuxt.options.runtimeConfig.public.nuxtQuery, {
-      addDevtools: options.addDevtools
-    })
+    const config = (nuxt.options.runtimeConfig.public.nuxtQuery = defu(
+      nuxt.options.runtimeConfig.public.nuxtQuery,
+      {
+        addDevtools: options.addDevtools,
+      }
+    ))
 
     logger.success('Starting nuxt-query...')
 
@@ -36,7 +46,21 @@ export default defineNuxtModule<ModuleOptions>({
     }
 
     // Add composables
-    const composables = resolve(runtimeDir, 'composables')
-    addImportsDir(composables)
-  }
+    addImports([
+      {
+        name: 'useQueryCache',
+        from: resolve(runtimeDir, 'composables', 'useQueryCache'),
+      },
+      {
+        name: 'useQueryClient',
+        from: resolve(runtimeDir, 'composables', 'useQueryClient'),
+      },
+      {
+        name: 'useQuery',
+        from: resolve(runtimeDir, 'composables', 'useQuery'),
+      },
+    ])
+
+    logger.success('Finished setting up nuxt-query.')
+  },
 })
