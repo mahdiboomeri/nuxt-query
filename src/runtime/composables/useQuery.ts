@@ -19,6 +19,7 @@ type QueryState = 'pending' | 'error' | 'success'
 
 interface _QueryData<DataT, DataE> extends _AsyncData<DataT, DataE> {
   state: Ref<QueryState>
+  fetching: Ref<boolean>
 }
 
 type QueryData<DataT, DataE> = _QueryData<DataT, DataE> &
@@ -57,6 +58,8 @@ export function useQuery<
     }
   }
 
+  const fetching = ref<boolean>(false)
+
   // Resolve options
   const _options: QueryOptions<DataT, Transform, PickKeys> = {
     ...unref(useQueryClient<DataT, Transform, PickKeys>()),
@@ -67,9 +70,45 @@ export function useQuery<
     _options.immediate = false
   }
 
+  if (
+    process.server &&
+    _options.server === false &&
+    _options.immediate !== false
+  ) {
+    fetching.value = true // Avoid hydration errors
+  }
+
+  // Lifecycle functions
+  const onQuery = () => {
+    fetching.value = true
+  }
+  const onSuccess = (value: DataT) => {}
+  // eslint-disable-next-line n/handle-callback-err
+  const onError = (error: DataE) => {}
+  const onSettled = () => {
+    fetching.value = false
+  }
+
   const query = useAsyncData<DataT, DataE, Transform, PickKeys>(
     key,
-    () => handler(),
+    () => {
+      onQuery()
+
+      return handler()
+        .then((value) => {
+          onSuccess(value)
+
+          return value
+        })
+        .catch((error: DataE) => {
+          onError(error)
+
+          throw error
+        })
+        .finally(() => {
+          onSettled()
+        })
+    },
     _options
   ) as Promise<_AsyncData<Data, DataE | null>>
 
@@ -131,5 +170,6 @@ export function useQuery<
   return {
     ...query,
     state,
+    fetching,
   } as QueryData<Data, DataE | null>
 }
