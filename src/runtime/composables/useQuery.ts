@@ -6,7 +6,8 @@ import type {
   _Transform,
 } from 'nuxt/dist/app/composables/asyncData'
 import type { NuxtApp } from '@nuxt/schema'
-import { Ref, ref, unref, watch } from 'vue'
+import { watchOnce } from '@vueuse/core'
+import { Ref, WatchSource, ref, unref, watch } from 'vue'
 import {
   useAsyncData,
   useNuxtApp,
@@ -23,6 +24,14 @@ interface _QueryData<DataT, DataE> extends _AsyncData<DataT, DataE> {
 type QueryData<DataT, DataE> = _QueryData<DataT, DataE> &
   Promise<_QueryData<DataT, DataE>>
 
+interface QueryOptions<
+  DataT,
+  Transform extends _Transform<DataT> = _Transform<DataT, DataT>,
+  PickKeys extends KeyOfRes<Transform> = KeyOfRes<Transform>
+> extends AsyncDataOptions<DataT, Transform, PickKeys> {
+  enable?: WatchSource<unknown>
+}
+
 export function useQuery<
   DataT,
   DataE = Error,
@@ -31,7 +40,7 @@ export function useQuery<
 >(
   key: string,
   handler: (nuxtApp?: NuxtApp) => Promise<DataT>,
-  options?: AsyncDataOptions<DataT, Transform, PickKeys>
+  options?: QueryOptions<DataT, Transform, PickKeys>
 ) {
   type Data = PickFrom<ReturnType<Transform>, PickKeys>
 
@@ -49,9 +58,13 @@ export function useQuery<
   }
 
   // Resolve options
-  const _options: AsyncDataOptions<DataT, Transform, PickKeys> = {
+  const _options: QueryOptions<DataT, Transform, PickKeys> = {
     ...unref(useQueryClient<DataT, Transform, PickKeys>()),
     ...options,
+  }
+
+  if (_options.enable) {
+    _options.immediate = false
   }
 
   const query = useAsyncData<DataT, DataE, Transform, PickKeys>(
@@ -105,6 +118,13 @@ export function useQuery<
         },
         { immediate: true }
       )
+
+      // Dependent query
+      if (_options.enable) {
+        watchOnce(_options.enable, () => {
+          clientQuery.execute()
+        })
+      }
     })
   }
 
