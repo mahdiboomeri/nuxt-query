@@ -45,6 +45,9 @@ export default defineNuxtModule<ModuleOptions>({
       logger.success('Installed nuxt-query devtools.')
     }
 
+    // Add vueuse
+    nuxt.options.modules.push('@vueuse/nuxt')
+
     // Add composables
     addImports([
       {
