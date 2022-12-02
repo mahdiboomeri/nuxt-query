@@ -32,6 +32,14 @@ function isPlainObject(o: any): o is Object {
   return true
 }
 
+export function parseQueryKey(queryKey: QueryKey | (() => QueryKey)): QueryKey {
+  if (typeof queryKey === 'function') {
+    return queryKey()
+  }
+
+  return queryKey
+}
+
 /**
  * Default query keys hash function.
  * Hashes the value into a stable hash.

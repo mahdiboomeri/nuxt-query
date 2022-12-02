@@ -8,7 +8,7 @@ import type {
 import type { NuxtApp } from '@nuxt/schema'
 import { watchOnce } from '@vueuse/core'
 import { Ref, WatchSource, ref, unref, watch } from 'vue'
-import { hashQueryKey } from '../utils'
+import { hashQueryKey, parseQueryKey } from '../utils'
 import {
   useAsyncData,
   useNuxtApp,
@@ -116,9 +116,10 @@ export function useQuery<
   }
 
   // Query key hash
+  const rawKey = parseQueryKey(key)
   const queryKey = _options.queryKeyHash
-    ? _options.queryKeyHash(key)
-    : hashQueryKey(key)
+    ? _options.queryKeyHash(rawKey)
+    : hashQueryKey(rawKey)
 
   const query = useAsyncData<DataT, DataE, Transform, PickKeys>(
     queryKey,
