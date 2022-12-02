@@ -27,10 +27,16 @@ type QueryData<DataT, DataE> = _QueryData<DataT, DataE> &
 
 interface QueryOptions<
   DataT,
+  DataE,
   Transform extends _Transform<DataT> = _Transform<DataT, DataT>,
   PickKeys extends KeyOfRes<Transform> = KeyOfRes<Transform>
 > extends AsyncDataOptions<DataT, Transform, PickKeys> {
   enable?: WatchSource<unknown>
+
+  onRequest?(): Promise<void> | void
+  onSuccess?(value: DataT): Promise<void> | void
+  onError?(error: DataE): Promise<void> | void
+  onResponse?(): Promise<void> | void
 }
 
 export function useQuery<
@@ -41,7 +47,7 @@ export function useQuery<
 >(
   key: string,
   handler: (nuxtApp?: NuxtApp) => Promise<DataT>,
-  options?: QueryOptions<DataT, Transform, PickKeys>
+  options?: QueryOptions<DataT, DataE, Transform, PickKeys>
 ) {
   type Data = PickFrom<ReturnType<Transform>, PickKeys>
 
@@ -61,7 +67,7 @@ export function useQuery<
   const fetching = ref<boolean>(false)
 
   // Resolve options
-  const _options: QueryOptions<DataT, Transform, PickKeys> = {
+  const _options: QueryOptions<DataT, DataE, Transform, PickKeys> = {
     ...unref(useQueryClient<DataT, Transform, PickKeys>()),
     ...options,
   }
@@ -75,38 +81,54 @@ export function useQuery<
     _options.server === false &&
     _options.immediate !== false
   ) {
-    fetching.value = true // Avoid hydration errors
+    // Avoid hydration errors
+    fetching.value = true
   }
 
   // Lifecycle functions
-  const onQuery = () => {
+  const onRequest = async () => {
     fetching.value = true
+
+    if (_options.onRequest) {
+      await _options.onRequest()
+    }
   }
-  const onSuccess = (value: DataT) => {}
-  // eslint-disable-next-line n/handle-callback-err
-  const onError = (error: DataE) => {}
-  const onSettled = () => {
+  const onSuccess = async (value: DataT) => {
+    if (_options.onSuccess) {
+      await _options.onSuccess(value)
+    }
+  }
+  const onError = async (error: DataE) => {
+    if (_options.onError) {
+      await _options.onError(error)
+    }
+  }
+  const onResponse = async () => {
     fetching.value = false
+
+    if (_options.onResponse) {
+      await _options.onResponse()
+    }
   }
 
   const query = useAsyncData<DataT, DataE, Transform, PickKeys>(
     key,
-    () => {
-      onQuery()
+    async () => {
+      await onRequest()
 
       return handler()
-        .then((value) => {
-          onSuccess(value)
+        .then(async (value) => {
+          await onSuccess(value)
 
           return value
         })
-        .catch((error: DataE) => {
-          onError(error)
+        .catch(async (error: DataE) => {
+          await onError(error)
 
           throw error
         })
-        .finally(() => {
-          onSettled()
+        .finally(async () => {
+          await onResponse()
         })
     },
     _options
