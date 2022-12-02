@@ -8,6 +8,7 @@ import type {
 import type { NuxtApp } from '@nuxt/schema'
 import { watchOnce } from '@vueuse/core'
 import { Ref, WatchSource, ref, unref, watch } from 'vue'
+import { hashQueryKey } from '../utils'
 import {
   useAsyncData,
   useNuxtApp,
@@ -45,7 +46,7 @@ export function useQuery<
   Transform extends _Transform<DataT> = _Transform<DataT, DataT>,
   PickKeys extends KeyOfRes<Transform> = KeyOfRes<Transform>
 >(
-  key: string,
+  key: unknown,
   handler: (nuxtApp?: NuxtApp) => Promise<DataT>,
   options?: QueryOptions<DataT, DataE, Transform, PickKeys>
 ) {
@@ -112,7 +113,7 @@ export function useQuery<
   }
 
   const query = useAsyncData<DataT, DataE, Transform, PickKeys>(
-    key,
+    hashQueryKey(key),
     async () => {
       await onRequest()
 
