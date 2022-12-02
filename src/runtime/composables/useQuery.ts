@@ -8,6 +8,7 @@ import type {
 import type { NuxtApp } from '@nuxt/schema'
 import { watchOnce } from '@vueuse/core'
 import { Ref, WatchSource, ref, unref, watch } from 'vue'
+import { hashQueryKey } from '../utils'
 import {
   useAsyncData,
   useNuxtApp,
@@ -15,7 +16,8 @@ import {
   useQueryClient,
 } from '#imports'
 
-type QueryState = 'pending' | 'error' | 'success'
+export type QueryKey = unknown
+export type QueryState = 'pending' | 'error' | 'success'
 
 interface _QueryData<DataT, DataE> extends _AsyncData<DataT, DataE> {
   state: Ref<QueryState>
@@ -32,6 +34,7 @@ interface QueryOptions<
   PickKeys extends KeyOfRes<Transform> = KeyOfRes<Transform>
 > extends AsyncDataOptions<DataT, Transform, PickKeys> {
   enable?: WatchSource<unknown>
+  queryKeyHash?: (queryKey: QueryKey) => string
 
   onRequest?(): Promise<void> | void
   onSuccess?(value: DataT): Promise<void> | void
@@ -45,7 +48,7 @@ export function useQuery<
   Transform extends _Transform<DataT> = _Transform<DataT, DataT>,
   PickKeys extends KeyOfRes<Transform> = KeyOfRes<Transform>
 >(
-  key: string,
+  key: QueryKey,
   handler: (nuxtApp?: NuxtApp) => Promise<DataT>,
   options?: QueryOptions<DataT, DataE, Transform, PickKeys>
 ) {
@@ -72,6 +75,7 @@ export function useQuery<
     ...options,
   }
 
+  // Disable immidiate when using dependent query
   if (_options.enable) {
     _options.immediate = false
   }
@@ -111,8 +115,13 @@ export function useQuery<
     }
   }
 
+  // Query key hash
+  const queryKey = _options.queryKeyHash
+    ? _options.queryKeyHash(key)
+    : hashQueryKey(key)
+
   const query = useAsyncData<DataT, DataE, Transform, PickKeys>(
-    key,
+    queryKey,
     async () => {
       await onRequest()
 
