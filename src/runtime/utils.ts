@@ -1,3 +1,5 @@
+import type { QueryKey } from './composables/useQuery'
+
 function hasObjectPrototype(o: any): boolean {
   return Object.prototype.toString.call(o) === '[object Object]'
 }
@@ -30,14 +32,13 @@ function isPlainObject(o: any): o is Object {
   return true
 }
 
-
 /**
  * Default query keys hash function.
  * Hashes the value into a stable hash.
- * 
+ *
  * Copied from https://github.com/tanstack/query
  */
-export function hashQueryKey(queryKey: unknown): string {
+export function hashQueryKey(queryKey: QueryKey): string {
   return JSON.stringify(queryKey, (_, val) =>
     isPlainObject(val)
       ? Object.keys(val)
@@ -46,6 +47,6 @@ export function hashQueryKey(queryKey: unknown): string {
             result[key] = val[key]
             return result
           }, {} as any)
-      : val,
+      : val
   )
 }
