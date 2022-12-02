@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { useQuery, useFetch } from '#imports'
+import { useQuery } from '#imports'
 
 const { data, fetching } = await useQuery(
   'lifecycle',
