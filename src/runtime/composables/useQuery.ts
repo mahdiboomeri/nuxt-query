@@ -7,7 +7,7 @@ import type {
 } from 'nuxt/dist/app/composables/asyncData'
 import type { NuxtApp } from '@nuxt/schema'
 import { useWindowFocus, watchOnce, whenever } from '@vueuse/core'
-import { Ref, WatchSource, ref, unref, watch } from 'vue'
+import { type Ref, type WatchSource, ref, unref, watch } from 'vue'
 import { hashQueryKey, parseQueryKey } from '../utils'
 import {
   useAsyncData,
