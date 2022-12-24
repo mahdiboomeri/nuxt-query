@@ -6,7 +6,7 @@ import type {
   _Transform,
 } from 'nuxt/dist/app/composables/asyncData'
 import type { NuxtApp } from '@nuxt/schema'
-import { watchOnce } from '@vueuse/core'
+import { useWindowFocus, watchOnce, whenever } from '@vueuse/core'
 import { Ref, WatchSource, ref, unref, watch } from 'vue'
 import { hashQueryKey, parseQueryKey } from '../utils'
 import {
@@ -35,6 +35,7 @@ interface QueryOptions<
 > extends AsyncDataOptions<DataT, Transform, PickKeys> {
   enable?: WatchSource<unknown>
   queryKeyHash?: (queryKey: QueryKey) => string
+  refetchOnWindowFocus?: boolean
 
   onRequest?(): Promise<void> | void
   onSuccess?(value: DataT): Promise<void> | void
@@ -195,6 +196,12 @@ export function useQuery<
         watchOnce(_options.enable, () => {
           clientQuery.execute()
         })
+      }
+
+      // Refresh on window focus
+      if (_options.refetchOnWindowFocus !== false) {
+        const focused = useWindowFocus()
+        whenever(focused, () => clientQuery.refresh())
       }
     })
   }
