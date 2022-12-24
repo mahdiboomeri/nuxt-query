@@ -199,7 +199,7 @@ export function useQuery<
       }
 
       // Refresh on window focus
-      if (_options.refetchOnWindowFocus !== false) {
+      if (_options.refetchOnWindowFocus) {
         const focused = useWindowFocus()
         whenever(focused, () => clientQuery.refresh())
       }
